@@ -1,0 +1,17 @@
+altgraph==0.17
+Click==7.1.2
+fastapi==0.65.1
+itsdangerous==1.1.0
+Jinja2==2.11.3
+macholib==1.14
+MarkupSafe==1.1.1
+pefile==2019.4.18
+PyInstaller==4.3
+pyodbc==4.0.30
+pywin32==300
+pywin32-ctypes==0.2.0
+Werkzeug==1.0.1
+Pillow==8.2.0
+pytwain
+ipdb
+uvicorn
