@@ -8,6 +8,7 @@ import os
 from lib import Scanner, logger
 import traceback
 from typing import Optional
+import sys 
 
 app = FastAPI()
 
@@ -20,17 +21,24 @@ def get_scanner(scanner_name: str = None):
             return None, [], {}, None 
 
         scanner_name = scanners[0]
+        
+        if isinstance(scanner_name, tuple) or isinstance(scanner_name, list): 
+            scanner_name = scanner_name[0]
+
     try: 
         ls.setScanner(scanner_name)
         ls.setDPI(300)
         ls.setPixelType("color")
-        ls.close()
+        if sys.platform == "win32": 
+            ls.close()
     except Exception as ex: 
         logger.error('Can not set Scanner: {0}'.format(ex))
-        return None, scanners
+        print('Can not set Scanner: {0}'.format(ex))
+        return None, scanners, set(scanners), None
     return ls, scanners, set(scanners), scanner_name
 
 ls, scanners, scanners_set, scanner_name = get_scanner()
+print(ls, scanners, scanners_set, scanner_name)
 lock = False
 last_lock = time.time()
 LOCK_THRESHOLD = int(os.environ.get('LOCK_THRESHOLD', None)) if os.environ.get('LOCK_THRESHOLD', None) is not None else 3
@@ -69,6 +77,7 @@ def scanning(request, request_id: Optional[str] = None, scanner_name: Optional[s
     global lock 
     global scanners
     global scanners_set
+    global last_lock
 
     if lock: 
         if last_lock + LOCK_THRESHOLD < time.time():
@@ -125,6 +134,7 @@ def scanning(request, request_id: Optional[str] = None, scanner_name: Optional[s
                 "msg": "There's some error when scanner: {0}".format(traceback.format_exc()),
                 "time": time.time() - start_time
             }
+        ls, scanners, scanners_set, scanner_name = get_scanner()
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=output)
 
     lock = False

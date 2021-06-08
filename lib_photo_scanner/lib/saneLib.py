@@ -1,5 +1,8 @@
 import sane
 from .log import logger
+import os 
+import base64
+from io import BytesIO
 
 #======================================================================
 #	Name:	    saneLib
@@ -22,7 +25,7 @@ class saneLib(object):
         Get available scanner from sane module
         """
         sane.init()
-        devices = sane.get_devices()[0]
+        devices = sane.get_devices()
         if len(devices) > 0:
             return devices
         else:
@@ -91,20 +94,34 @@ class saneLib(object):
 
         self.scanner.mode = pixelType.lower()
 
-    def scan(self):
+    def scan(self, scanner_name:str=None, return_type:str="image"):
         """
         Scan and return PIL object if success else return False
+        return_type: image, path, based64
         """
         
         if self.scanner == None:
             raise ScannerNotSet
 
-        try:
-            self.scanner.start()
-            image = self.scanner.snap()
+        # curr_folder = os.path.dirname(__name__)
+        # image_path = os.path.join(curr_folder, "{0}.bmp".format(uuid.uuid4()))
+
+        if scanner_name is None:
+            scanner_name = self.scannerName
+
+        # try:
+        self.scanner.start()
+        image = self.scanner.snap()
+
+        if return_type == "image":
             return image
-        except:
-            return False
+        elif return_type == "based64":
+            buffered = BytesIO()
+            image.save(buffered, format="JPEG")
+            img_str = base64.b64encode(buffered.getvalue()).decode('ascii')
+            return img_str
+        # except:
+        #     return False
 
     def closeScanner(self):
         """
